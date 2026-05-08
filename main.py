@@ -21,19 +21,29 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 model_path = os.path.join(BASE_DIR, "model.pkl")
 
 model = pickle.load(open(model_path, "rb"))
+scaler_path = os.path.join(BASE_DIR, "scaler.pkl")
+scaler = pickle.load(open(scaler_path, "rb"))
 
 # 🔥 FIXED INPUT (16 feature zorunlu)
 class InputData(BaseModel):
     features: conlist(float, min_length=16, max_length=16)
 
+
+
+
+
 @app.post("/predict")
 def predict(data: InputData):
     arr = np.array(data.features).reshape(1, -1)
 
-    prediction = model.predict(arr)
+    arr_scaled = scaler.transform(arr)
+
+    prediction = model.predict(arr_scaled)
+    probabilities = model.predict_proba(arr_scaled)
 
     return {
-        "prediction": int(prediction[0])
+        "prediction": int(prediction[0]),
+        "probabilities": probabilities.tolist()
     }
 
 
